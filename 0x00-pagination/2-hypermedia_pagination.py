@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""  function that takes two integer arguments page and page_size. """
+"""Pagiantion python
+"""
 
 
-from typing import Tuple
 import csv
 import math
-from typing import List
+from typing import List, Dict
 
 
 class Server:
@@ -28,43 +28,36 @@ class Server:
         return self.__dataset
 
     def get_page(self, page: int = 1, page_size: int = 10) -> List[List]:
-        """ method that takes integer argument"""
-        assert isinstance(
-            page, int) and page > 0, "check argument is int and > 0"
-        assert isinstance(
-            page_size, int) and page_size > 0, "check argument is int and > 0"
+        """assert to verify that both argumets are intergers greater than 0
+        """
+        assert isinstance(page, int) and page > 0
+        assert isinstance(page_size, int) and page_size > 0
+
+        start_index = (page - 1) * page_size
+        end_index = page * page_size
+
         dataset = self.dataset()
-        start_page, ending_page = index_range(page, page_size)
-        if start_page >= page_size:
-            return []
-        return dataset[start_page:ending_page]
+        return dataset[start_index:end_index]
 
-    def get_hyper(self, page: int = 1, page_size: int = 10) -> dict:
-        """Takes page and page size and
-        returns a dict of some keys and values."""
-        data = self.get_page(page, page_size)
-        start_page, ending_page = index_range(page, page_size)
-        former_page = None
-        if former_page is not None and former_page > 0:
-            former_page = page - 1
-        page_next = None
-        if page_next is not None and page_next < len(self.dataset()):
-            page_next = page + 1
-        num_page = len(self.dataset())
-        num_full_page, remainder = divmod(num_page, page_size)
-        total_page = num_full_page + bool(remainder)
-        return {
-            "page_size": len(data),
-            "page": page,
-            "data": data,
-            "next_page": page_next,
-            "prev_page": former_page,
-            "total_pages": total_page}
+    def get_hyper(self, page: int = 1, page_size: int = 10) -> Dict[str, int]:
+        """Returns
+            page_size: the length of the returned dataset page
+            page: the current page number
+            data: the dataset page (equivalent to return from previous task)
+            next_page: number of the next page, None if no next page
+            prev_page: number of the previous page, None if no previous page
+            total_pages: the total number of pages in the dataset as an integer
+        """
+        data = self.get_page(page=page, page_size=page_size)
+        total_pages = math.ceil(len(self.dataset()) / page_size)
 
+        hyper = {
+            'page': page,
+            'page_size': page_size,
+            'data': data,
+            'next_page': page + 1 if page < total_pages else None,
+            'prev_page': page - 1 if page > 1 else None,
+            'total_pages': total_pages
+        }
 
-def index_range(page, page_size):
-    """function that takes page and page size as arguments """
-    start_page = (page - 1) * page_size
-    ending_page = (page * page_size)
-    size = (start_page, ending_page)
-    return size
+        return hyper

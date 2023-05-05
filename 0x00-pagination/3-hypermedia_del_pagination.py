@@ -5,7 +5,7 @@ Deletion-resilient hypermedia pagination
 
 import csv
 import math
-from typing import List
+from typing import List, Dict
 
 
 class Server:
@@ -28,7 +28,7 @@ class Server:
 
         return self.__dataset
 
-    def indexed_dataset(self) -> dict[int, List]:
+    def indexed_dataset(self) -> Dict[int, List]:
         """Dataset indexed by sorting position, starting at 0
         """
         if self.__indexed_dataset is None:
@@ -39,23 +39,34 @@ class Server:
             }
         return self.__indexed_dataset
 
-    def get_hyper_index(self, index: int = None, page_size: int = 10) -> dict:
-        """A method with two integer arguments index with a None default value
-        and page_size with default value of 10.
-        """
-        assert index < 1000, """check to see index is within range """
-        dataset = self.indexed_dataset()
-        index_end = index + page_size
-        next_index = index_end
-        page = index // page_size + 1
+    def get_hyper_index(self, index: int = None, page_size: int = 10) -> Dict:
+        """Return a dictionary with pagination metadata for a given index.
+            Arguments:
+            index -- the current index to paginate
+            none_value -- value to use if the index is out of range
+            page_size -- the number of items per page (default 10)
+            Returns:
+            A dictionary containing pagination metadata:
+            {
+                "index": current start index of the returned page,
+                "next_index": next index to query,
+                "page_size": current page size,
+                "data": actual page of the dataset
+            }
+            """
+        assert isinstance(index, int) and 0 <= index < len(self.dataset())
+        data = self.indexed_dataset()
+        start_index = index
+        end_index = index + page_size
         data = []
-        for i in range(index, index_end):
-            if i in dataset.keys():
-                data.append(dataset[i])
-        else:
-            next_index += 1
+        for i in range(start_index, end_index):
+            data.append(self.dataset()[i])
+
+        page = index // page_size + 1
+        next_index = index + page_size
         return {
-            "index": index,
-            "data": data,
+            "index": start_index,
+            "next_index": next_index,
             "page_size": page_size,
-            "next_index": next_index}
+            "data": data
+            }
